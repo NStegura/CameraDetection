@@ -5,17 +5,19 @@ from aiortc.contrib.media import MediaPlayer, MediaRelay, MediaBlackhole
 from starlette.requests import Request
 from starlette.responses import HTMLResponse
 from starlette.templating import Jinja2Templates
+
+from settings.settings import MEDIA_ROOT
 from video_hosting.schemas import Offer
 from video_hosting.services import get_media, create_local_tracks, VideoTransformTrack
 
-MEDIA = './media/'
+
 templates = Jinja2Templates(directory="./templates")
 video_hosting_router = APIRouter(prefix='/video', tags=['video_hosting'])
 
 
 @video_hosting_router.get("/", response_class=HTMLResponse)
 async def index(request: Request):
-    media_files = get_media(MEDIA)
+    media_files = get_media(MEDIA_ROOT)
     return templates.TemplateResponse("index.html", {"request": request, 'media_files': media_files})
 
 
