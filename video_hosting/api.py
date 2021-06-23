@@ -10,7 +10,7 @@ from video_hosting.services import get_media, create_local_tracks, VideoTransfor
 
 MEDIA = './media/'
 templates = Jinja2Templates(directory="./templates")
-video_hosting_router = APIRouter(prefix='/video')
+video_hosting_router = APIRouter(prefix='/video', tags=['video_hosting'])
 
 
 @video_hosting_router.get("/", response_class=HTMLResponse)
