@@ -22,7 +22,7 @@ function negotiate() {
         });
     }).then(function() {
         var offer = pc.localDescription;
-        return fetch('/offer', {
+        return fetch('/video/offer', {
             body: JSON.stringify({
                 sdp: offer.sdp,
                 type: offer.type,
