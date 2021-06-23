@@ -1,19 +1,18 @@
 import asyncio
 import os
 import platform
-
 import cv2
-
 from aiortc import MediaStreamTrack, RTCPeerConnection, RTCSessionDescription
-from aiortc.contrib.media import MediaPlayer, MediaRelay, MediaBlackhole
+from aiortc.contrib.media import MediaPlayer, MediaRelay, MediaBlackhole, MediaRecorder
 
 from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
 
 from starlette.requests import Request
-from starlette.responses import HTMLResponse
+from starlette.responses import HTMLResponse, RedirectResponse
 from starlette.templating import Jinja2Templates
 
+from auth.api import auth
 from src.schemas import Offer
 from video_transform import VideoTransformTrack
 
@@ -25,12 +24,13 @@ templates = Jinja2Templates(directory="templates")
 
 relay = None
 webcam = None
+MEDIA = './media/'
 
 
-def create_local_tracks(play_from=None, options={"framerate": "30", "video_size": "640x480"}):
+def create_local_tracks(play_from, options={"framerate": "30", "video_size": "640x480"}):
 
     global relay, webcam
-    # play_from = './production ID_3765335.mp4'
+    # play_from = './media/kotiki.mp4'
     if play_from:
         player = MediaPlayer(play_from)
         return player.audio, player.video
@@ -52,7 +52,8 @@ def create_local_tracks(play_from=None, options={"framerate": "30", "video_size"
 
 @app.get("/", response_class=HTMLResponse)
 async def index(request: Request):
-    return templates.TemplateResponse("index.html", {"request": request})
+    media_files = get_media(MEDIA)
+    return templates.TemplateResponse("index.html", {"request": request, 'media_files': media_files})
 
 
 @app.get("/cv", response_class=HTMLResponse)
@@ -76,7 +77,11 @@ async def offer(params: Offer):
             pcs.discard(pc)
 
     # open media source
-    audio, video = create_local_tracks()
+    try:
+        audio, video = create_local_tracks(play_from=params.play_from)
+    except Exception as ex:
+        print(ex)
+        return index
 
     await pc.setRemoteDescription(offer)
     for t in pc.getTransceivers():
@@ -109,20 +114,15 @@ async def offer(params: Offer):
             pcs.discard(pc)
 
     # open media source
-    # audio, video = create_local_tracks()
+    # audio, video = create_local_tracks(play_from=params.play_from)
 
     @pc.on("track")
     def on_track(track):
 
-        # if track.kind == "audio":
-        #     pc.addTrack(player.audio)
-        #     recorder.addTrack(track)
         if track.kind == "video":
             pc.addTrack(
                 VideoTransformTrack(relay.subscribe(track), transform=params.video_transform)
             )
-            # if args.record_to:
-            #     recorder.addTrack(relay.subscribe(track))
 
         @track.on("ended")
         async def on_ended():
@@ -151,5 +151,15 @@ async def on_shutdown():
     await asyncio.gather(*coros)
     pcs.clear()
 
-# dshow @ 00000233ce069880] real-time buffer [USB2.0 PC CAMERA] [video input] too full or near too full (101% of size: 3041280 [rtbufsize parameter])! frame
-#  dropped!
+
+app.include_router(auth)
+
+
+def get_media(str):
+    lst_of_files = []
+    for root, dirs, files in os.walk(str):
+        for filename in files:
+            path = os.path.join(MEDIA, filename)
+            lst_of_files.append(path)
+    return lst_of_files
+
