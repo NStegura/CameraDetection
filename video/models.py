@@ -2,21 +2,9 @@ import datetime
 from typing import Optional, Union
 
 import ormar
-from db import metadata, database
 
-
-class MainMeta(ormar.ModelMeta):
-    metadata = metadata
-    database = database
-
-
-class User(ormar.Model):
-    class Meta(MainMeta):
-        pass
-
-    id: int = ormar.Integer(primary_key=True)
-    username: str = ormar.String(max_length=100)
-    email: str = ormar.String(max_length=100)
+from user.models import User
+from db import MainMeta
 
 
 class Video(ormar.Model):
