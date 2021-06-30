@@ -3,7 +3,7 @@ from fastapi.staticfiles import StaticFiles
 
 from db import database, metadata, engine
 
-from user.api import user_router
+from user.routers import user_router
 from video.api import video_router
 from video_hosting.api import video_hosting_router
 
