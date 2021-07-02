@@ -22,14 +22,18 @@ async def save_video(
         description: str,
         back_tasks: BackgroundTasks
 ):
-    file_name = os.path.join(MEDIA_ROOT, str(user.id), str(uuid4())+'.mp4')
+    dir_name = str(user.id)
+    dirlist = os.listdir(MEDIA_ROOT)
+    if dir_name not in dirlist:
+        os.mkdir(os.path.join(MEDIA_ROOT, dir_name))
+    file_name = os.path.join(MEDIA_ROOT, dir_name, str(uuid4())+'.mp4')
     if file.content_type == 'video/mp4':
         # back_tasks.add_task(write_video, file_name, file)
         await write_video(file_name, file)
     else:
         raise HTTPException(status_code=418, detail="It isn't mp4")
     info = UploadVideo(title=title, description=description)
-    return await Video.objects.create(file=file_name, user=user, **info.dict())
+    return await Video.objects.create(file=file_name, user=user.dict(), **info.dict())
 
 
 async def write_video(file_name: str, file: UploadFile):
