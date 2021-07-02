@@ -1,21 +1,11 @@
 from fastapi import APIRouter
-from fastapi_users import FastAPIUsers
+
 
 from user.api import on_after_register
-from user.auth import auth_backends, jwt_authentication
-from user.models import user_db
-from user.schemas import UserCreate, User, UserUpdate, UserDB
+from user.auth import jwt_authentication, fastapi_users
 
 user_router = APIRouter()
 
-fastapi_users = FastAPIUsers(
-    user_db,
-    auth_backends,
-    User,
-    UserCreate,
-    UserUpdate,
-    UserDB,
-)
 
 user_router.include_router(
     fastapi_users.get_auth_router(jwt_authentication), prefix="/auth/jwt", tags=["auth"]
@@ -46,3 +36,4 @@ user_router.include_router(
     prefix="/users",
     tags=["users"]
 )
+
