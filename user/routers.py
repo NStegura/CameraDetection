@@ -1,8 +1,9 @@
 from fastapi import APIRouter
 
 
-from user.api import on_after_register
-from user.auth import jwt_authentication, fastapi_users
+from user.api import after_verification, send_sms_code, after_verification_request
+from user.auth import jwt_authentication, fastapi_users, SECRET_KEY
+from user.api import send_email_after_register
 
 user_router = APIRouter()
 
@@ -12,7 +13,7 @@ user_router.include_router(
 )
 
 user_router.include_router(
-    fastapi_users.get_register_router(on_after_register), prefix="/auth", tags=["auth"]
+    fastapi_users.get_register_router(send_email_after_register), prefix="/auth", tags=["auth"]
 )
 
 # user_router.include_router(
@@ -23,13 +24,15 @@ user_router.include_router(
 #     tags=["auth"],
 # )
 
-# user_router.include_router(
-#     fastapi_users.get_verify_router(
-#         SECRET, after_verification_request=after_verification_request
-#     ),
-#     prefix="/auth",
-#     tags=["auth"],
-# )
+user_router.include_router(
+    fastapi_users.get_verify_router(
+        SECRET_KEY,
+        after_verification_request=after_verification_request,
+        after_verification=after_verification
+    ),
+    prefix="/auth",
+    tags=["auth"],
+)
 
 user_router.include_router(
     fastapi_users.get_users_router(),
